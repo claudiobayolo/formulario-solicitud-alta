@@ -6,7 +6,7 @@
   <title>Solicitud de Alta de Servicio</title>
 
   <style>
-    /* --- ESTILOS VISUALES (Mantenidos y pulidos) --- */
+    /* --- ESTILOS VISUALES --- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -114,7 +114,7 @@
             </div>
             <div class="col">
               <label>Cliente</label>
-              <input id="cliente" readonly placeholder="Se completará automático">
+              <input id="cliente" readonly placeholder="Se buscará automáticamente...">
             </div>
           </div>
 
@@ -284,8 +284,8 @@
              <div class="col"><label>Concepto Otros Costos</label><input id="concepto_otros_costos"></div>
           </div>
           <div class="row">
-            <div class="col"><label>Moneda</label><select id="moneda_otros_costos"><option>UF</option><option>USD</option></select></div>
-            <div class="col"><label>Monto</label><input id="monto_otros_costos" type="number"></div>
+            <div class="col"><label>Moneda Otros</label><select id="moneda_otros_costos"><option>UF</option><option>USD</option></select></div>
+            <div class="col"><label>Monto Otros</label><input id="monto_otros_costos" type="number"></div>
           </div>
            <div class="row">
             <div class="col"><label>Moneda Instalación</label><select id="moneda_instalacion"><option>UF</option><option>USD</option></select></div>
@@ -318,13 +318,17 @@
 
   <!-- LÓGICA JAVASCRIPT -->
   <script>
-    // 1. INICIALIZACIÓN Y VARIABLES GLOBALES
+    // ---------------------------------------------------------
+    // 1. CONFIGURACIÓN
+    // ---------------------------------------------------------
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFgFQrqp0nyFNXXD20Fip_GH9VgKxh8qVWwfHugG5jlg2SHznKX-3MLmd5nPatLCSZ5g/exec"; 
+    const RUT_API_TOKEN = "092b1aad-07f8-4109-8b9d-de00cac1665f";
+
+    // 2. INICIALIZACIÓN
     let contadorDirecciones = 0;
     
-    // Función Callback que Google Maps llamará cuando cargue
     function initMapsCallback() {
       console.log("Google Maps API cargada correctamente.");
-      // Activar autocompletado en campos estáticos si existen
       setupAutocomplete(document.getElementById('dir_unica'));
       setupAutocomplete(document.getElementById('dir_b_unica'));
     }
@@ -338,22 +342,23 @@
       }
     }
 
-    // 2. NAVEGACIÓN Y VALIDACIÓN
+    // 3. NAVEGACIÓN
     function mostrar(n) {
       const p1 = document.getElementById("pantalla1");
       const p2 = document.getElementById("pantalla2");
       const btnGuardar = document.getElementById("btn_guardar");
 
-      // Validaciones básicas antes de pasar a la 2
       if (n === 2) {
         const sam = document.getElementById("sam").value;
         const rut = document.getElementById("rut").value;
+        
+        // Validaciones mínimas
         if (!rut) { alert("Ingrese el RUT del cliente."); return; }
         if (sam.length !== 6) { alert("El Nro SAM debe tener 6 dígitos."); return; }
         
         p1.style.display = "none";
         p2.style.display = "block";
-        btnGuardar.disabled = false; // Habilitar guardar
+        btnGuardar.disabled = false;
       } else {
         p1.style.display = "block";
         p2.style.display = "none";
@@ -361,7 +366,7 @@
       }
     }
 
-    // 3. LÓGICA DINÁMICA DE DIRECCIONES
+    // 4. DIRECCIONES
     function cambiarTipoDireccion() {
       const tipo = document.getElementById("tipo_direccion").value;
       const blqUnica = document.getElementById("bloque_unica");
@@ -397,101 +402,59 @@
           </div>
         </div>
       `;
-      
       document.getElementById("contenedorDirecciones").appendChild(div);
       
-      // Activar Google Places en el nuevo input creado
       if (window.google && window.google.maps) {
         setupAutocomplete(div.querySelector(".dir-input-multi"));
       }
     }
 
-    // 4. INICIALIZACIÓN DE DATOS (MOCK PARA GITHUB PAGES)
+    // 5. VALIDACIÓN DE RUT CON API EXTERNA
+    async function buscarRazonSocial() {
+      const rutInput = document.getElementById("rut");
+      const clienteInput = document.getElementById("cliente");
+
+      // Limpieza del RUT
+      let rutLimpio = rutInput.value.replace(/\./g, "").replace(/\s/g, "").trim().toUpperCase();
+
+      if (rutLimpio.length < 8) return; 
+
+      clienteInput.value = "Buscando...";
+      clienteInput.readOnly = true;
+
+      const url = `https://sre.cl/api/company_info?token=${RUT_API_TOKEN}&rut=${rutLimpio}&actualizado=False`;
+
+      try {
+        const response = await fetch(url);
+        if (response.status === 200) {
+          const data = await response.json(); 
+          if (data.razon_social) {
+            clienteInput.value = data.razon_social;
+          } else {
+            clienteInput.value = "RUT sin nombre / No encontrado";
+          }
+        } else {
+          clienteInput.value = "Error API";
+        }
+      } catch (error) {
+        console.error("Error en búsqueda:", error);
+        clienteInput.value = "Error de Conexión";
+      }
+    }
+
+    // 6. EVENTOS DE CARGA
     document.addEventListener("DOMContentLoaded", function () {
-      
-      // Simulación de carga de datos iniciales
       const fechaHoy = new Date().toISOString().split('T')[0];
       document.getElementById("fecha_ingreso").value = fechaHoy;
       document.getElementById("solicitud_nro").value = "SOL-" + Math.floor(Math.random() * 10000);
 
-      // Evento RUT (Simulación de búsqueda)
+      // Conectar evento RUT
       const rutInput = document.getElementById("rut");
-      rutInput.addEventListener("blur", function () {
-        if (rutInput.value.length > 8) {
-          document.getElementById("cliente").value = "EMPRESA DEMO S.A.";
-          console.log("Simulando búsqueda de cliente...");
-        }
-      });
-      
-      // Formato solo números
-      document.body.addEventListener("input", (e) => {
-        if (e.target.classList.contains("phone-input") || e.target.id === "sam") {
-          e.target.value = e.target.value.replace(/\D/g, "").slice(0, 9);
-        }
-      });
-    });
-
-    // 5. GUARDAR DATOS (PAYLOAD JSON)
-    function guardarSolicitud() {
-      const getVal = (id) => document.getElementById(id).value;
-      
-      // Recopilar multidirecciones si aplica
-      let listaDirecciones = [];
-      if (getVal("tipo_direccion") === "MULTI") {
-        document.querySelectorAll(".bloque-dir").forEach((bloque, index) => {
-          listaDirecciones.push({
-            id: index + 1,
-            direccion: bloque.querySelector(".dir-input-multi").value,
-            servicio: bloque.querySelector(".serv-multi").value,
-            capacidad: bloque.querySelector(".cap-multi").value
-          });
-        });
-      } else {
-        listaDirecciones.push({
-          id: 1,
-          direccion: getVal("dir_unica"),
-          servicio: getVal("servicio_unica"),
-          capacidad: getVal("capacidad_unica")
-        });
+      if (rutInput) {
+        rutInput.addEventListener("blur", buscarRazonSocial);
       }
-
-      const payload = {
-        meta: {
-          solicitud: getVal("solicitud_nro"),
-          fecha: getVal("fecha_ingreso")
-        },
-        cliente: {
-          rut: getVal("rut"),
-          razon: getVal("razon"),
-          sam: getVal("sam"),
-          contactos: {
-             ejecutivo: getVal("ejecutivo"),
-             fono_ejecutivo: getVal("fono_ejecutivo"),
-             tecnico: getVal("contacto_tecnico")
-          }
-        },
-        servicio: {
-          proveedor: getVal("proveedor"),
-          actividad: getVal("actividad"),
-          tipo: getVal("tipo_direccion"),
-          items: listaDirecciones
-        },
-        financiero: {
-          renta: getVal("valor_renta"),
-          moneda_renta: getVal("moneda_renta"),
-          instalacion: getVal("costo_instalacion")
-        }
-      };
-
-      console.log("PAYLOAD LISTO PARA SQL SERVER:", payload);
-      alert("¡Simulación Exitosa!\nDatos generados en consola (F12).\n\nEn producción, esto se enviaría a SQL Server.");
-    }
-  </script>
-
-  <!-- CARGA API GOOGLE AL FINAL -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAVJJmzcxnJsHGwnOnPkC77rybEcuplxdc&libraries=places&callback=initMapsCallback" async defer></script>
-</body>
-</html>
+      
+      document.body.addEventListen
 
 
 
