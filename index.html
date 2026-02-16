@@ -321,8 +321,8 @@
     // ---------------------------------------------------------
     // 1. CONFIGURACIÓN
     // ---------------------------------------------------------
+    // URL DE TU SCRIPT DE GOOGLE (SIRVE PARA GUARDAR Y PARA BUSCAR RUT)
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFgFQrqp0nyFNXXD20Fip_GH9VgKxh8qVWwfHugG5jlg2SHznKX-3MLmd5nPatLCSZ5g/exec"; 
-    const RUT_API_TOKEN = "092b1aad-07f8-4109-8b9d-de00cac1665f";
 
     // 2. INICIALIZACIÓN
     let contadorDirecciones = 0;
@@ -409,7 +409,8 @@
       }
     }
 
-    // 5. VALIDACIÓN DE RUT CON API EXTERNA
+    // 5. VALIDACIÓN DE RUT VÍA PROXY (Google Script)
+    // ESTO EVITA ERRORES CORS Y USA TU API KEY
     async function buscarRazonSocial() {
       const rutInput = document.getElementById("rut");
       const clienteInput = document.getElementById("cliente");
@@ -419,26 +420,34 @@
 
       if (rutLimpio.length < 8) return; 
 
-      clienteInput.value = "Buscando...";
+      clienteInput.value = "Consultando...";
       clienteInput.readOnly = true;
 
-      const url = `https://sre.cl/api/company_info?token=${RUT_API_TOKEN}&rut=${rutLimpio}&actualizado=False`;
+      // LLAMAMOS A TU PROPIO SCRIPT COMO PROXY
+      const urlConsulta = `${SCRIPT_URL}?rut=${rutLimpio}`;
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(urlConsulta);
         if (response.status === 200) {
           const data = await response.json(); 
           if (data.razon_social) {
             clienteInput.value = data.razon_social;
+            clienteInput.readOnly = true; // Bloqueado si encontró
           } else {
-            clienteInput.value = "RUT sin nombre / No encontrado";
+            clienteInput.value = "RUT no encontrado / Escriba Manual";
+            clienteInput.readOnly = false; // Permitir corregir
+            clienteInput.select();
           }
         } else {
           clienteInput.value = "Error API";
+          clienteInput.readOnly = false;
         }
       } catch (error) {
-        console.error("Error en búsqueda:", error);
-        clienteInput.value = "Error de Conexión";
+        console.error("Error buscando RUT:", error);
+        // Fallback: Permitir ingreso manual si falla la conexión
+        clienteInput.value = "";
+        clienteInput.placeholder = "Ingrese nombre manualmente...";
+        clienteInput.readOnly = false;
       }
     }
 
@@ -471,7 +480,6 @@
 
       } catch (err) {
         console.error("Error crítico en inicialización:", err);
-        // Fallback silencioso para no molestar al usuario
       }
     });
 
@@ -569,5 +577,3 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAVJJmzcxnJsHGwnOnPkC77rybEcuplxdc&libraries=places&callback=initMapsCallback" async defer></script>
 </body>
 </html>
-
-
