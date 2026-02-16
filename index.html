@@ -442,19 +442,132 @@
       }
     }
 
-    // 6. EVENTOS DE CARGA
+    // 6. EVENTOS DE CARGA BLINDADOS
     document.addEventListener("DOMContentLoaded", function () {
-      const fechaHoy = new Date().toISOString().split('T')[0];
-      document.getElementById("fecha_ingreso").value = fechaHoy;
-      document.getElementById("solicitud_nro").value = "SOL-" + Math.floor(Math.random() * 10000);
-
-      // Conectar evento RUT
-      const rutInput = document.getElementById("rut");
-      if (rutInput) {
-        rutInput.addEventListener("blur", buscarRazonSocial);
-      }
       
-      document.body.addEventListen
+      try {
+        // 1. Llenar Fecha y Nro Solicitud INMEDIATAMENTE
+        const fechaHoy = new Date().toISOString().split('T')[0];
+        const inputFecha = document.getElementById("fecha_ingreso");
+        const inputSol = document.getElementById("solicitud_nro");
+        
+        if (inputFecha) inputFecha.value = fechaHoy;
+        if (inputSol) inputSol.value = "SOL-" + Math.floor(Math.random() * 10000);
+        
+        console.log("Datos iniciales cargados OK");
 
+        // 2. Conectar evento RUT
+        const rutInput = document.getElementById("rut");
+        if (rutInput) {
+          rutInput.addEventListener("blur", buscarRazonSocial);
+        }
+        
+        // 3. Validar teléfonos
+        document.body.addEventListener("input", (e) => {
+          if (e.target.classList.contains("phone-input") || e.target.id === "sam") {
+            e.target.value = e.target.value.replace(/\D/g, "").slice(0, 9);
+          }
+        });
+
+      } catch (err) {
+        console.error("Error crítico en inicialización:", err);
+        // Fallback silencioso para no molestar al usuario
+      }
+    });
+
+    // 7. GUARDAR SOLICITUD
+    function guardarSolicitud() {
+      const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
+      
+      let direccionesList = [];
+      const tipoDir = getVal("tipo_direccion");
+      
+      if (tipoDir === "MULTI") {
+        document.querySelectorAll(".bloque-dir").forEach((bloque, index) => {
+          direccionesList.push({
+            id: index + 1,
+            direccion: bloque.querySelector(".dir-input-multi").value,
+            servicio: bloque.querySelector(".serv-multi").value,
+            capacidad: bloque.querySelector(".cap-multi").value
+          });
+        });
+      } else {
+        direccionesList.push({
+          id: 1,
+          direccion: getVal("dir_unica"),
+          servicio: getVal("servicio_unica"),
+          capacidad: getVal("capacidad_unica")
+        });
+      }
+
+      const payload = {
+        meta: {
+          solicitud: getVal("solicitud_nro"),
+          fecha: getVal("fecha_ingreso"),
+          proyecto: getVal("proyecto"),
+          pep: getVal("pep")
+        },
+        cliente: {
+          rut: getVal("rut"),
+          cliente_nombre: getVal("cliente"),
+          sam: getVal("sam"),
+          razon: getVal("razon"),
+          contactos: {
+            ejecutivo: getVal("ejecutivo"),
+            fono_ejecutivo: getVal("fono_ejecutivo"),
+            contacto_cliente: getVal("contacto_cliente"),
+            fono_cliente: getVal("fono_cliente"),
+            tecnico: getVal("contacto_tecnico"),
+            fono_tecnico: getVal("fono_tecnico"),
+            jefe: getVal("jefe_proyecto"),
+            fono_jefe: getVal("fono_jefe")
+          }
+        },
+        servicio: {
+          proveedor: getVal("proveedor"),
+          actividad: getVal("actividad"),
+          tipo: tipoDir,
+          items: direccionesList,
+          direccion_b: getVal("dir_b_unica")
+        },
+        financiero: {
+          concepto_otros: getVal("concepto_otros_costos"),
+          moneda_otros: getVal("moneda_otros_costos"),
+          monto_otros: getVal("monto_otros_costos"),
+          moneda_instalacion: getVal("moneda_instalacion"),
+          costo_instalacion: getVal("costo_instalacion"),
+          moneda_renta: getVal("moneda_renta"),
+          renta: getVal("valor_renta"),
+          plazo: getVal("plazo_meses")
+        }
+      };
+
+      const btn = document.getElementById("btn_guardar");
+      btn.disabled = true;
+      btn.innerText = "Guardando...";
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        alert("✅ Solicitud guardada correctamente.");
+        window.location.reload(); 
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        alert("❌ Error al guardar.");
+        btn.disabled = false;
+        btn.innerText = "Guardar Solicitud";
+      });
+    }
+  </script>
+
+  <!-- CARGA API GOOGLE AL FINAL -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAVJJmzcxnJsHGwnOnPkC77rybEcuplxdc&libraries=places&callback=initMapsCallback" async defer></script>
+</body>
+</html>
 
 
