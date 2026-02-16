@@ -409,8 +409,7 @@
       }
     }
 
-    // 5. VALIDACIÓN DE RUT VÍA PROXY (Google Script)
-    // ESTO EVITA ERRORES CORS Y USA TU API KEY
+    // 5. VALIDACIÓN DE RUT ESTRICTA (SIN MANUAL)
     async function buscarRazonSocial() {
       const rutInput = document.getElementById("rut");
       const clienteInput = document.getElementById("cliente");
@@ -420,34 +419,36 @@
 
       if (rutLimpio.length < 8) return; 
 
+      // Bloquear todo mientras consulta
       clienteInput.value = "Consultando...";
       clienteInput.readOnly = true;
+      rutInput.disabled = true; 
 
-      // LLAMAMOS A TU PROPIO SCRIPT COMO PROXY
       const urlConsulta = `${SCRIPT_URL}?rut=${rutLimpio}`;
 
       try {
         const response = await fetch(urlConsulta);
-        if (response.status === 200) {
-          const data = await response.json(); 
-          if (data.razon_social) {
-            clienteInput.value = data.razon_social;
-            clienteInput.readOnly = true; // Bloqueado si encontró
-          } else {
-            clienteInput.value = "RUT no encontrado / Escriba Manual";
-            clienteInput.readOnly = false; // Permitir corregir
-            clienteInput.select();
-          }
+        const data = await response.json(); // Esperamos JSON válido siempre
+        
+        if (data.razon_social) {
+          // ÉXITO
+          clienteInput.value = data.razon_social;
+          // Sigue bloqueado (readOnly) para que no lo editen
         } else {
-          clienteInput.value = "Error API";
-          clienteInput.readOnly = false;
+          // RUT NO ENCONTRADO
+          alert("❌ RUT no encontrado en la base de datos oficial.\nVerifique el número ingresado.");
+          clienteInput.value = "";
+          rutInput.focus();
         }
       } catch (error) {
+        // ERROR DE CONEXIÓN
         console.error("Error buscando RUT:", error);
-        // Fallback: Permitir ingreso manual si falla la conexión
-        clienteInput.value = "";
-        clienteInput.placeholder = "Ingrese nombre manualmente...";
-        clienteInput.readOnly = false;
+        alert("⚠️ Error de conexión con el servicio de validación.\nIntente nuevamente.");
+        clienteInput.value = "Error de Validación";
+      } finally {
+        // Desbloquear RUT para corregir, pero Cliente SIEMPRE BLOQUEADO
+        rutInput.disabled = false;
+        clienteInput.readOnly = true; 
       }
     }
 
@@ -577,3 +578,4 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAVJJmzcxnJsHGwnOnPkC77rybEcuplxdc&libraries=places&callback=initMapsCallback" async defer></script>
 </body>
 </html>
+
