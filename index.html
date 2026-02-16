@@ -20,7 +20,11 @@
     }
     .header {
       background: linear-gradient(135deg, #4568dc 0%, #b06ab3 100%);
-      color: #fff; padding: 22px 28px; font-size: 22px; font-weight: 700;
+      color: #fff; padding: 15px 28px; font-size: 22px; font-weight: 700;
+      display: flex; align-items: center; gap: 15px;
+    }
+    .header img {
+      height: 40px; background: white; padding: 5px; border-radius: 4px;
     }
     .content-wrapper { padding: 24px 28px 10px 28px; }
     .section-title {
@@ -87,7 +91,10 @@
 
 <body>
   <div class="container">
-    <div class="header">Solicitud de Alta de Servicio</div>
+    <div class="header">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Telefonica_Logo.svg/1200px-Telefonica_Logo.svg.png" alt="Telefonica">
+      <span>Solicitud de Alta de Servicio</span>
+    </div>
 
     <form id="mainForm" onsubmit="return false;">
       <div class="content-wrapper">
@@ -99,7 +106,8 @@
           <div class="row row-sol-sam">
             <div class="col">
               <label>Solicitud Nro</label>
-              <input id="solicitud_nro" readonly placeholder="Cargando...">
+              <!-- Se carga vía Fetch al iniciar -->
+              <input id="solicitud_nro" readonly placeholder="Obteniendo folio...">
             </div>
             <div class="col">
               <label>Fecha Ingreso</label>
@@ -224,8 +232,10 @@
               <label>Actividad</label>
               <select id="actividad" required>
                 <option value="" selected disabled>Seleccione…</option>
-                <option>ALTA</option><option>RECONFIGURACION</option>
-                <option>UPGRADE</option><option>TRASLADO</option>
+                <option>ALTA</option>
+                <option>RECONFIGURACION</option>
+                <option>UPGRADE</option>
+                <option>TRASLADO</option>
               </select>
             </div>
             <div class="col">
@@ -257,14 +267,37 @@
                 <label>Servicio</label>
                 <select id="servicio_unica">
                   <option value="" selected disabled>Seleccione…</option>
-                  <option>Capa 2 Mpls</option><option>FTTH</option><option>Internet Dedicado</option><option>VPN IP</option>
+                  <option>Capa 2 Mpls</option>
+                  <option>Capa 3 sin Calidad (BE)</option>
+                  <option>Cruzada Fibra Optica</option>
+                  <option>DWDM</option>
+                  <option>FTTH</option>
+                  <option>Infraestructura</option>
+                  <option>Intenert Dedicado Tasa Agregación 1_1</option>
+                  <option>VPN IP</option>
                 </select>
               </div>
               <div class="col">
                 <label>Capacidad</label>
                 <select id="capacidad_unica">
                   <option value="" selected disabled>Seleccione…</option>
-                  <option>10 Mbps</option><option>100 Mbps</option><option>1 Giga</option>
+                  <option>1 Pelo</option>
+                  <option>256 Kbps</option>
+                  <option>1 Mbps</option>
+                  <option>2 Mbps</option>
+                  <option>10 Mbps</option>
+                  <option>20 Mbps</option>
+                  <option>20 MB/ 10 MB</option>
+                  <option>50 Mbps</option>
+                  <option>60 Mbps</option>
+                  <option>100 Mbps</option>
+                  <option>200 Mbps</option>
+                  <option>300 Mbps</option>
+                  <option>400 Mbps</option>
+                  <option>600 Mbps</option>
+                  <option>800 Mbps</option>
+                  <option>1 Giga</option>
+                  <option>1G / 500M</option>
                 </select>
               </div>
             </div>
@@ -307,8 +340,8 @@
       </div>
 
       <div class="footer">
-        <button type="button" class="btn-nav" onclick="mostrar(1)">Anterior</button>
-        <button type="button" class="btn-nav" onclick="mostrar(2)">Siguiente</button>
+        <button type="button" class="btn-nav" onclick="mostrar(1)" id="btn_anterior" style="display:none">Anterior</button>
+        <button type="button" class="btn-nav" onclick="mostrar(2)" id="btn_siguiente">Siguiente</button>
         <button type="button" id="btn_guardar" class="btn-primary" disabled onclick="guardarSolicitud()">
           Guardar Solicitud
         </button>
@@ -321,8 +354,19 @@
     // ---------------------------------------------------------
     // 1. CONFIGURACIÓN
     // ---------------------------------------------------------
-    // URL DE TU SCRIPT DE GOOGLE (SIRVE PARA GUARDAR Y PARA BUSCAR RUT)
+    // URL DE TU SCRIPT DE GOOGLE
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFgFQrqp0nyFNXXD20Fip_GH9VgKxh8qVWwfHugG5jlg2SHznKX-3MLmd5nPatLCSZ5g/exec"; 
+
+    // LISTAS MAESTRAS (Para uso en modo Multi)
+    const OPCIONES_SERVICIO = [
+      "Capa 2 Mpls", "Capa 3 sin Calidad (BE)", "Cruzada Fibra Optica", 
+      "DWDM", "FTTH", "Infraestructura", "Intenert Dedicado Tasa Agregación 1_1", "VPN IP"
+    ];
+    const OPCIONES_CAPACIDAD = [
+      "1 Pelo", "256 Kbps", "1 Mbps", "2 Mbps", "10 Mbps", "20 Mbps", "20 MB/ 10 MB",
+      "50 Mbps", "60 Mbps", "100 Mbps", "200 Mbps", "300 Mbps", "400 Mbps", 
+      "600 Mbps", "800 Mbps", "1 Giga", "1G / 500M"
+    ];
 
     // 2. INICIALIZACIÓN
     let contadorDirecciones = 0;
@@ -347,6 +391,9 @@
       const p1 = document.getElementById("pantalla1");
       const p2 = document.getElementById("pantalla2");
       const btnGuardar = document.getElementById("btn_guardar");
+      
+      const btnSiguiente = document.getElementById("btn_siguiente");
+      const btnAnterior = document.getElementById("btn_anterior");
 
       if (n === 2) {
         const sam = document.getElementById("sam").value;
@@ -358,11 +405,20 @@
         
         p1.style.display = "none";
         p2.style.display = "block";
+        
         btnGuardar.disabled = false;
+        // Lógica de botones: Ocultar Siguiente, Mostrar Anterior
+        if(btnSiguiente) btnSiguiente.style.display = "none";
+        if(btnAnterior) btnAnterior.style.display = "inline-block";
+
       } else {
         p1.style.display = "block";
         p2.style.display = "none";
+        
         btnGuardar.disabled = true;
+        // Lógica de botones: Mostrar Siguiente, Ocultar Anterior
+        if(btnSiguiente) btnSiguiente.style.display = "inline-block";
+        if(btnAnterior) btnAnterior.style.display = "none";
       }
     }
 
@@ -384,6 +440,10 @@
       if (contadorDirecciones >= 40) { alert("Máximo 40 direcciones"); return; }
       contadorDirecciones++;
 
+      // Crear selects dinámicos con las opciones maestras
+      const htmlServicios = OPCIONES_SERVICIO.map(s => `<option>${s}</option>`).join("");
+      const htmlCapacidad = OPCIONES_CAPACIDAD.map(c => `<option>${c}</option>`).join("");
+
       const div = document.createElement("div");
       div.className = "bloque-dir";
       div.innerHTML = `
@@ -394,11 +454,11 @@
         <div class="row">
           <div class="col">
             <label>Servicio</label>
-            <select class="serv-multi"><option>Capa 2 Mpls</option><option>FTTH</option><option>Internet Dedicado</option></select>
+            <select class="serv-multi">${htmlServicios}</select>
           </div>
           <div class="col">
             <label>Capacidad</label>
-            <select class="cap-multi"><option>10 Mbps</option><option>100 Mbps</option><option>1 Giga</option></select>
+            <select class="cap-multi">${htmlCapacidad}</select>
           </div>
         </div>
       `;
@@ -409,7 +469,7 @@
       }
     }
 
-    // 5. VALIDACIÓN DE RUT ESTRICTA (SIN MANUAL)
+    // 5. VALIDACIÓN DE RUT ESTRICTA (VIA GOOGLE SCRIPT)
     async function buscarRazonSocial() {
       const rutInput = document.getElementById("rut");
       const clienteInput = document.getElementById("cliente");
@@ -428,51 +488,54 @@
 
       try {
         const response = await fetch(urlConsulta);
-        const data = await response.json(); // Esperamos JSON válido siempre
+        const data = await response.json(); 
         
         if (data.razon_social) {
-          // ÉXITO
           clienteInput.value = data.razon_social;
-          // Sigue bloqueado (readOnly) para que no lo editen
         } else {
-          // RUT NO ENCONTRADO
           alert("❌ RUT no encontrado en la base de datos oficial.\nVerifique el número ingresado.");
           clienteInput.value = "";
           rutInput.focus();
         }
       } catch (error) {
-        // ERROR DE CONEXIÓN
         console.error("Error buscando RUT:", error);
-        alert("⚠️ Error de conexión con el servicio de validación.\nIntente nuevamente.");
-        clienteInput.value = "Error de Validación";
+        alert("⚠️ Error de conexión con el servicio de validación.");
+        clienteInput.value = "";
       } finally {
-        // Desbloquear RUT para corregir, pero Cliente SIEMPRE BLOQUEADO
         rutInput.disabled = false;
         clienteInput.readOnly = true; 
       }
     }
 
-    // 6. EVENTOS DE CARGA BLINDADOS
+    // 6. CARGA INICIAL
     document.addEventListener("DOMContentLoaded", function () {
       
       try {
-        // 1. Llenar Fecha y Nro Solicitud INMEDIATAMENTE
+        // A) Fecha Hoy
         const fechaHoy = new Date().toISOString().split('T')[0];
-        const inputFecha = document.getElementById("fecha_ingreso");
-        const inputSol = document.getElementById("solicitud_nro");
+        document.getElementById("fecha_ingreso").value = fechaHoy;
         
-        if (inputFecha) inputFecha.value = fechaHoy;
-        if (inputSol) inputSol.value = "SOL-" + Math.floor(Math.random() * 10000);
-        
-        console.log("Datos iniciales cargados OK");
+        // B) CORRELATIVO DESDE GOOGLE SHEETS
+        fetch(SCRIPT_URL) // GET sin params trae el ID
+          .then(r => r.json())
+          .then(data => {
+            if(data.next_id) {
+               document.getElementById("solicitud_nro").value = data.next_id;
+            } else {
+               document.getElementById("solicitud_nro").value = "10440"; // Fallback por si falla
+            }
+          })
+          .catch(e => {
+             console.error("Error obteniendo folio:", e);
+             document.getElementById("solicitud_nro").value = "10440";
+          });
 
-        // 2. Conectar evento RUT
+        console.log("Carga inicial OK");
+
+        // C) Listeners
         const rutInput = document.getElementById("rut");
-        if (rutInput) {
-          rutInput.addEventListener("blur", buscarRazonSocial);
-        }
+        if (rutInput) rutInput.addEventListener("blur", buscarRazonSocial);
         
-        // 3. Validar teléfonos
         document.body.addEventListener("input", (e) => {
           if (e.target.classList.contains("phone-input") || e.target.id === "sam") {
             e.target.value = e.target.value.replace(/\D/g, "").slice(0, 9);
@@ -484,7 +547,7 @@
       }
     });
 
-    // 7. GUARDAR SOLICITUD
+    // 7. GUARDAR
     function guardarSolicitud() {
       const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
       
@@ -578,4 +641,5 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAVJJmzcxnJsHGwnOnPkC77rybEcuplxdc&libraries=places&callback=initMapsCallback" async defer></script>
 </body>
 </html>
+
 
