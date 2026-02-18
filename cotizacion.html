@@ -279,8 +279,8 @@
         const response = await fetch(`${SCRIPT_URL}?rut=${rut}`);
         const data = await response.json();
         
-        if (data.razonsocial) {
-          razonInput.value = data.razonsocial;
+         if (data.razon_social) {
+          razonInput.value = data.razon_social;
           razonInput.style.backgroundColor = "#e6fffa";
         } else {
           razonInput.value = "";
