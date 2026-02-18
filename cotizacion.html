@@ -6,7 +6,7 @@
   <title>SOLICITUD DE COTIZACIÓN</title>
 
   <style>
-    /* --- ESTILOS VISUALES COMPACTOS (Basados en Index_2.html) --- */
+    /* --- ESTILOS VISUALES (Basados en Index_2.html) --- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -59,16 +59,22 @@
       letter-spacing: 0.5px;
     }
 
-    /* Grillas */
+    /* --- GRILLAS PERSONALIZADAS --- */
     .row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 12px;
       margin-bottom: 12px;
     }
-    .row.full { grid-template-columns: 1fr; }
+    
+    .col { flex: 1; min-width: 200px; display: flex; flex-direction: column; }
+    .col-full { flex: 100%; }
 
-    /* Fila especial de 5 columnas para parámetros técnicos */
+    /* Proporción 3/4 y 1/4 */
+    .col-3-4 { flex: 3; min-width: 300px; }
+    .col-1-4 { flex: 1; min-width: 150px; }
+
+    /* Fila especial de 5 columnas (Parámetros Técnicos) */
     .row-5 {
       display: grid;
       grid-template-columns: repeat(5, minmax(110px, 1fr));
@@ -78,8 +84,6 @@
     @media (max-width: 900px) {
       .row-5 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
     }
-
-    .col { display: flex; flex-direction: column; }
 
     label {
       font-size: 11px;
@@ -137,7 +141,7 @@
     }
     .btn-remove:hover { background: #e53e3e; color: #fff; }
 
-    /* Botones de Acción */
+    /* Botones */
     .actions { margin: 15px 0; }
     
     .btn-add {
@@ -202,7 +206,7 @@
         <div class="col">
           <label>PREVENTA</label>
           <select id="PREVENTA">
-            <option value="" selected>SELECCIONE...</option>
+            <option value="" selected>SELECCIONAR...</option>
             <option>ANDRES ALBERTO TAPIA LAGOS</option><option>CARLOS AROS HERRERA</option><option>CLAUDIO GUERRA VELIZ</option><option>CLAUDIO VARAS CARRILLO</option><option>DANIEL DAVID CARTEZ CÓRDOVA</option><option>DAVID ROMERO</option><option>ELIAZIN GALLARDO ASENCIO</option><option>ENZO BENAVIDES</option><option>ERWIN ISIDRO CID GALAF</option><option>EVELYN CONTRERAS CONTRERAS</option><option>FELIPE NAVARRO</option><option>FRANCISCO JAVIER ESCOBAR</option><option>FRANCO MARTÍNEZ DONOSO</option><option>GERARDO ANTONIO MONTECINOS MELLADO</option><option>GUSTAVO ADOLFO GERDING VARGAS</option><option>HECTOR FERNANDO RUIZ MENDOZA</option><option>HÉCTOR VALLADARES NUÑEZ</option><option>HELTON JUAN SEPULVEDA ARAVENA</option><option>HENRY NICOLAS FARIÑE VELIZ</option><option>IGNACIO DIAZ</option><option>ITALO UNDURRAGA ROJAS</option><option>IVÁN SARMIENTO</option><option>JAIME BARRERA PRIETO</option><option>JORGE OSVALDO FIGUEROA SOTO</option><option>JORGE RIVANO CONCHA</option><option>JOSÉ LABRÍN ESCOBEDO</option><option>JOSE LUIS CASTILLO VASQUEZ</option><option>JOSE MIGUEL ARANCIBIA</option><option>JUAN CARLOS JIMENEZ</option><option>JUANA CRISTINA NARVAEZ ARACENA</option><option>KATHIUSKA DE LA SANTISIMA TRI PERAZA MARTINEZ</option><option>LORENA ESPINOZA MEDINA</option><option>LUIS ORTIZ</option><option>MANUEL MACHUCA CARRASCO</option><option>MANUEL TORO CASAS-CORDERO</option><option>MAURICIO GUERRERO</option><option>NICOLAS CERDA</option><option>PABLO ORTEGA</option><option>RAÚL MARTÍNEZ ARAVENA</option><option>REINALDO PERDOMO MARCANO</option><option>RICHARD LIZARDO MALERMO NUÑEZ</option><option>ROBERTO CARLOS AROS ANGULO</option><option>ROBERTO FERNANDO PEREZ MOREIRA</option><option>ROBERTO TRINCADO</option><option>RONALD CAÑIZALES</option><option>RUBEN DAVID NAVIO GOMEZ</option><option>RUTH CAROLINA SOTO AVILES</option><option>WILLIAM CÁRDENAS FUENTES</option><option>YERKO ALEXANDER FLORES OSSES</option>
           </select>
         </div>
@@ -220,19 +224,20 @@
       <!-- 3. CONTACTOS -->
       <div class="section-title">3. CONTACTOS</div>
 
+      <!-- Fila Contacto Técnica: 3/4 + 1/4 -->
       <div class="row">
-        <div class="col">
+        <div class="col col-3-4">
           <label>CONTACTO TECNICO</label>
           <input type="text" id="CONTACTO_TECNICO">
         </div>
-        <div class="col">
+        <div class="col col-1-4">
           <label>FONO CONTACTO TECNICO</label>
           <input type="text" id="FONO_CONTACTO_TECNICO" value="+56 ">
         </div>
       </div>
 
       <div class="row full">
-        <div class="col">
+        <div class="col col-full">
           <label>OBSERVACIONES</label>
           <textarea id="OBSERVACIONES"></textarea>
         </div>
@@ -253,13 +258,13 @@
       agregarBloqueDireccion();
     });
 
-    // --- FUNCIÓN 1: BUSCAR CLIENTE (RUT) ---
+    // --- FUNCIÓN 1: BUSCAR CLIENTE ---
     async function buscarCliente() {
       const rutInput = document.getElementById("RUT_CLIENTE");
       const razonInput = document.getElementById("RAZON_SOCIAL");
       const rut = rutInput.value.trim().toUpperCase();
 
-      if (rut.length < 8) return; // Validación básica
+      if (rut.length < 8) return;
 
       razonInput.value = "BUSCANDO...";
       rutInput.disabled = true;
@@ -270,18 +275,17 @@
         
         if (data.razonsocial) {
           razonInput.value = data.razonsocial;
-          razonInput.style.backgroundColor = "#e6fffa"; // Éxito
+          razonInput.style.backgroundColor = "#e6fffa";
         } else {
           razonInput.value = "";
-          razonInput.placeholder = "CLIENTE NO ENCONTRADO - INGRESE MANUAL";
+          razonInput.placeholder = "NO ENCONTRADO - INGRESE MANUAL";
           razonInput.readOnly = false;
           razonInput.focus();
         }
       } catch (e) {
-        console.error("Error buscando cliente:", e);
+        console.error(e);
         razonInput.value = "";
         razonInput.readOnly = false; 
-        alert("Error de conexión al validar RUT. Puede ingresar Razón Social manualmente.");
       } finally {
         rutInput.disabled = false;
       }
@@ -302,19 +306,19 @@
         <strong>DIRECCIÓN #${contadorDirecciones}</strong>
         ${showDelete ? `<button type="button" class="btn-remove" onclick="eliminarBloque('${id}')">ELIMINAR</button>` : ""}
 
-        <!-- Fila 1 -->
+        <!-- Fila 1: Dirección (3/4) + Comuna (1/4) -->
         <div class="row">
-          <div class="col">
+          <div class="col col-3-4">
             <label>DIRECCION EXTREMO USUARIO</label>
             <input type="text" class="DIRECCION_EXTREMO_USUARIO google-autocomplete" placeholder="BUSCAR DIRECCIÓN...">
           </div>
-          <div class="col">
+          <div class="col col-1-4">
             <label>COMUNA</label>
             <input type="text" class="COMUNA" readonly>
           </div>
         </div>
 
-        <!-- Fila 2 -->
+        <!-- Fila 2: Coordenadas -->
         <div class="row">
           <div class="col">
             <label>LATITUD</label>
@@ -330,20 +334,20 @@
           </div>
         </div>
 
-        <!-- Fila 3 -->
+        <!-- Fila 3: Nodo -->
         <div class="row full">
-          <div class="col">
+          <div class="col col-full">
             <label>DIRECCION EXTREMO NODO</label>
             <input type="text" class="DIRECCION_EXTREMO_NODO google-autocomplete" placeholder="BUSCAR DIRECCIÓN NODO...">
           </div>
         </div>
 
-        <!-- Fila 4 -->
+        <!-- Fila 4: Parámetros Técnicos (5 cols) -->
         <div class="row-5">
           <div class="col">
             <label>PRODUCTO</label>
             <select class="PRODUCTO">
-              <option value="" selected>SELECCIONE...</option>
+              <option value="" selected>SELECCIONAR...</option>
               <option>ID</option><option>CAPA2</option><option>CAPA3</option><option>EODWDM</option>
             </select>
           </div>
@@ -354,25 +358,37 @@
           <div class="col">
             <label>VELOCIDAD (BW)</label>
             <select class="VELOCIDAD_BW">
-              <option value="">SELECCIONE...</option>
-              <option>10 MB</option><option>50 MB</option><option>100 MB</option>
-              <option>1 GB</option><option>10 GB</option>
+              <option value="">SELECCIONAR...</option>
+              <option>1 MB</option><option>2 MB</option><option>3 MB</option><option>4 MB</option><option>5 MB</option>
+              <option>10 MB</option><option>15 MB</option><option>20 MB</option><option>25 MB</option><option>30 MB</option>
+              <option>35 MB</option><option>40 MB</option><option>45 MB</option><option>50 MB</option>
+              <option>100 MB</option><option>150 MB</option><option>200 MB</option><option>250 MB</option><option>300 MB</option>
+              <option>350 MB</option><option>400 MB</option><option>450 MB</option><option>500 MB</option><option>550 MB</option>
+              <option>600 MB</option><option>650 MB</option><option>700 MB</option><option>750 MB</option><option>800 MB</option>
+              <option>850 MB</option><option>900 MB</option>
+              <option>1 GB</option><option>2 GB</option><option>3 GB</option><option>4 GB</option><option>5 GB</option>
+              <option>6 GB</option><option>7 GB</option><option>8 GB</option><option>9 GB</option><option>10 GB</option>
               <option>100 GB</option>
             </select>
           </div>
           <div class="col">
             <label>HABILITACION</label>
-            <select class="HABILITACION"><option>DIURNA</option><option>NOCTURNA</option></select>
+            <select class="HABILITACION">
+              <option value="">SELECCIONAR...</option>
+              <option>DIURNA</option><option>NOCTURNA</option>
+            </select>
           </div>
           <div class="col">
             <label>PROTECCION</label>
-            <select class="PROTECCION"><option>1+0</option><option>1+1</option></select>
+            <select class="PROTECCION">
+              <option value="">SELECCIONAR...</option>
+              <option>1+0</option><option>1+1</option><option>0+1</option>
+            </select>
           </div>
         </div>
       `;
       container.appendChild(div);
 
-      // Activar Google Maps en los nuevos inputs
       if (typeof google !== 'undefined' && google.maps && google.maps.places) {
         activarAutocomplete(div.querySelector(".DIRECCION_EXTREMO_USUARIO"), div);
         activarAutocomplete(div.querySelector(".DIRECCION_EXTREMO_NODO"), null);
@@ -383,20 +399,21 @@
       document.getElementById(id)?.remove();
     }
 
-    // --- FUNCIÓN 3: GOOGLE MAPS ---
+    // --- FUNCIÓN 3: GOOGLE MAPS (7 DECIMALES) ---
     function activarAutocomplete(inputElement, parentDiv) {
       const autocomplete = new google.maps.places.Autocomplete(inputElement, {
         componentRestrictions: { country: "cl" },
         fields: ["address_components", "geometry", "formatted_address"]
       });
 
-      if (parentDiv) { // Solo si es dirección de usuario llenamos coordenadas
+      if (parentDiv) {
         autocomplete.addListener("place_changed", () => {
           const place = autocomplete.getPlace();
           if (!place.geometry) return;
 
-          const lat = place.geometry.location.lat();
-          const lng = place.geometry.location.lng();
+          // Fijar a 7 decimales
+          const lat = place.geometry.location.lat().toFixed(7);
+          const lng = place.geometry.location.lng().toFixed(7);
           
           parentDiv.querySelector(".LATITUD").value = lat;
           parentDiv.querySelector(".LONGITUD").value = lng;
@@ -423,11 +440,10 @@
       });
     }
 
-    // --- FUNCIÓN 4: GUARDAR (POST) ---
+    // --- FUNCIÓN 4: GUARDAR ---
     function enviar() {
       const btn = document.getElementById("btnGuardar");
       
-      // Recopilar Datos Base
       const data = {
         FECHA: document.getElementById("FECHA_SOLICITUD").value,
         PROYECTO: document.getElementById("NRO_PROYECTO").value,
@@ -441,7 +457,6 @@
         SITIOS: []
       };
 
-      // Recopilar Direcciones
       document.querySelectorAll(".bloque-dir").forEach((b, i) => {
         data.SITIOS.push({
           N: i + 1,
@@ -460,7 +475,6 @@
       btn.disabled = true;
       btn.innerText = "ENVIANDO...";
 
-      // Enviar a Google Script (modo no-cors para evitar bloqueo, no retorna JSON legible pero funciona)
       fetch(SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
