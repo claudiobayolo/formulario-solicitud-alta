@@ -91,15 +91,12 @@
 
 <body>
   <div class="container">
-          <div class="header" style="display: flex; align-items: center; gap: 15px;">
-      <!-- LOGO NUEVO QUE ELEGISTE -->
+    <div class="header" style="display: flex; align-items: center; gap: 15px;">
       <img src="https://1000marcas.net/wp-content/uploads/2021/04/Telefonica-logo.png" 
            alt="Telefonica" 
            style="height: 50px; background: white; padding: 5px 10px; border-radius: 4px; object-fit: contain;">
       <span>Solicitud de Alta de Servicio</span>
     </div>
-
-
 
     <form id="mainForm" onsubmit="return false;">
       <div class="content-wrapper">
@@ -111,7 +108,6 @@
           <div class="row row-sol-sam">
             <div class="col">
               <label>Solicitud Nro</label>
-              <!-- Se carga vía Fetch al iniciar -->
               <input id="solicitud_nro" readonly placeholder="Obteniendo folio...">
             </div>
             <div class="col">
@@ -322,21 +318,37 @@
              <div class="col"><label>Concepto Otros Costos</label><input id="concepto_otros_costos"></div>
           </div>
           <div class="row">
-            <div class="col"><label>Moneda Otros</label><select id="moneda_otros_costos"><option>UF</option><option>USD</option></select></div>
+            <div class="col"><label>Moneda Otros</label>
+              <select id="moneda_otros_costos">
+                <option value="" selected disabled>Seleccione…</option>
+                <option>UF</option><option>USD</option>
+              </select>
+            </div>
             <div class="col"><label>Monto Otros</label><input id="monto_otros_costos" type="number"></div>
           </div>
            <div class="row">
-            <div class="col"><label>Moneda Instalación</label><select id="moneda_instalacion"><option>UF</option><option>USD</option></select></div>
+            <div class="col"><label>Moneda Instalación</label>
+              <select id="moneda_instalacion">
+                <option value="" selected disabled>Seleccione…</option>
+                <option>UF</option><option>USD</option>
+              </select>
+            </div>
             <div class="col"><label>Costo Instalación</label><input id="costo_instalacion" type="number"></div>
           </div>
           <div class="row">
-            <div class="col"><label>Moneda Renta</label><select id="moneda_renta"><option>UF</option><option>USD</option></select></div>
+            <div class="col"><label>Moneda Renta</label>
+              <select id="moneda_renta">
+                <option value="" selected disabled>Seleccione…</option>
+                <option>UF</option><option>USD</option>
+              </select>
+            </div>
             <div class="col"><label>Valor Renta</label><input id="valor_renta" type="number"></div>
           </div>
           <div class="row full">
             <div class="col">
               <label>Plazo Meses</label>
               <select id="plazo_meses" required>
+                <option value="" selected disabled>Seleccione…</option>
                 <option>12</option><option>24</option><option>36</option><option>48</option><option>60</option>
               </select>
             </div>
@@ -356,13 +368,9 @@
 
   <!-- LÓGICA JAVASCRIPT -->
   <script>
-    // ---------------------------------------------------------
-    // 1. CONFIGURACIÓN
-    // ---------------------------------------------------------
-    // URL DE TU SCRIPT DE GOOGLE
+    // URL DE TU SCRIPT DE GOOGLE (ALTAS)
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFgFQrqp0nyFNXXD20Fip_GH9VgKxh8qVWwfHugG5jlg2SHznKX-3MLmd5nPatLCSZ5g/exec"; 
 
-    // LISTAS MAESTRAS (Para uso en modo Multi)
     const OPCIONES_SERVICIO = [
       "Capa 2 Mpls", "Capa 3 sin Calidad (BE)", "Cruzada Fibra Optica", 
       "DWDM", "FTTH", "Infraestructura", "Intenert Dedicado Tasa Agregación 1_1", "VPN IP"
@@ -373,11 +381,9 @@
       "600 Mbps", "800 Mbps", "1 Giga", "1G / 500M"
     ];
 
-    // 2. INICIALIZACIÓN
     let contadorDirecciones = 0;
     
     function initMapsCallback() {
-      console.log("Google Maps API cargada correctamente.");
       setupAutocomplete(document.getElementById('dir_unica'));
       setupAutocomplete(document.getElementById('dir_b_unica'));
     }
@@ -391,43 +397,34 @@
       }
     }
 
-    // 3. NAVEGACIÓN
     function mostrar(n) {
       const p1 = document.getElementById("pantalla1");
       const p2 = document.getElementById("pantalla2");
       const btnGuardar = document.getElementById("btn_guardar");
-      
       const btnSiguiente = document.getElementById("btn_siguiente");
       const btnAnterior = document.getElementById("btn_anterior");
 
       if (n === 2) {
         const sam = document.getElementById("sam").value;
         const rut = document.getElementById("rut").value;
-        
-        // Validaciones mínimas
         if (!rut) { alert("Ingrese el RUT del cliente."); return; }
         if (sam.length !== 6) { alert("El Nro SAM debe tener 6 dígitos."); return; }
         
         p1.style.display = "none";
         p2.style.display = "block";
-        
         btnGuardar.disabled = false;
-        // Lógica de botones: Ocultar Siguiente, Mostrar Anterior
         if(btnSiguiente) btnSiguiente.style.display = "none";
         if(btnAnterior) btnAnterior.style.display = "inline-block";
 
       } else {
         p1.style.display = "block";
         p2.style.display = "none";
-        
         btnGuardar.disabled = true;
-        // Lógica de botones: Mostrar Siguiente, Ocultar Anterior
         if(btnSiguiente) btnSiguiente.style.display = "inline-block";
         if(btnAnterior) btnAnterior.style.display = "none";
       }
     }
 
-    // 4. DIRECCIONES
     function cambiarTipoDireccion() {
       const tipo = document.getElementById("tipo_direccion").value;
       const blqUnica = document.getElementById("bloque_unica");
@@ -445,9 +442,12 @@
       if (contadorDirecciones >= 40) { alert("Máximo 40 direcciones"); return; }
       contadorDirecciones++;
 
-      // Crear selects dinámicos con las opciones maestras
-      const htmlServicios = OPCIONES_SERVICIO.map(s => `<option>${s}</option>`).join("");
-      const htmlCapacidad = OPCIONES_CAPACIDAD.map(c => `<option>${c}</option>`).join("");
+      // Agregamos opción vacía por defecto
+      const htmlServicios = `<option value="" selected disabled>Seleccione…</option>` + 
+                            OPCIONES_SERVICIO.map(s => `<option>${s}</option>`).join("");
+                            
+      const htmlCapacidad = `<option value="" selected disabled>Seleccione…</option>` + 
+                            OPCIONES_CAPACIDAD.map(c => `<option>${c}</option>`).join("");
 
       const div = document.createElement("div");
       div.className = "bloque-dir";
@@ -474,85 +474,66 @@
       }
     }
 
-    // 5. VALIDACIÓN DE RUT ESTRICTA (VIA GOOGLE SCRIPT)
+    // BUSCADOR RUT CORREGIDO (CONECTADO AL NUEVO SCRIPT ALTAS)
     async function buscarRazonSocial() {
       const rutInput = document.getElementById("rut");
       const clienteInput = document.getElementById("cliente");
-
-      // Limpieza del RUT
-      let rutLimpio = rutInput.value.replace(/\./g, "").replace(/\s/g, "").trim().toUpperCase();
-
+      let rutLimpio = rutInput.value.trim().toUpperCase();
       if (rutLimpio.length < 8) return; 
 
-      // Bloquear todo mientras consulta
       clienteInput.value = "Consultando...";
-      clienteInput.readOnly = true;
+      clienteInput.style.opacity = "0.7";
       rutInput.disabled = true; 
 
-      const urlConsulta = `${SCRIPT_URL}?rut=${rutLimpio}`;
-
       try {
-        const response = await fetch(urlConsulta);
+        const response = await fetch(`${SCRIPT_URL}?rut=${rutLimpio}`);
         const data = await response.json(); 
         
         if (data.razon_social) {
           clienteInput.value = data.razon_social;
+          clienteInput.style.backgroundColor = "#e6fffa"; 
         } else {
-          alert("❌ RUT no encontrado en la base de datos oficial.\nVerifique el número ingresado.");
           clienteInput.value = "";
-          rutInput.focus();
+          clienteInput.placeholder = "Cliente no encontrado. Ingrese manual.";
+          clienteInput.readOnly = false; 
+          clienteInput.focus();
         }
       } catch (error) {
-        console.error("Error buscando RUT:", error);
-        alert("⚠️ Error de conexión con el servicio de validación.");
         clienteInput.value = "";
+        clienteInput.placeholder = "Error conexión. Ingrese manual.";
+        clienteInput.readOnly = false; 
       } finally {
         rutInput.disabled = false;
-        clienteInput.readOnly = true; 
+        clienteInput.style.opacity = "1";
       }
     }
-
-    // 6. CARGA INICIAL
+    
     document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("rut").addEventListener("blur", buscarRazonSocial);
       
-      try {
-        // A) Fecha Hoy
-        const fechaHoy = new Date().toISOString().split('T')[0];
-        document.getElementById("fecha_ingreso").value = fechaHoy;
-        
-        // B) CORRELATIVO DESDE GOOGLE SHEETS
-        fetch(SCRIPT_URL) // GET sin params trae el ID
-          .then(r => r.json())
-          .then(data => {
-            if(data.next_id) {
-               document.getElementById("solicitud_nro").value = data.next_id;
-            } else {
-               document.getElementById("solicitud_nro").value = "10440"; // Fallback por si falla
-            }
-          })
-          .catch(e => {
-             console.error("Error obteniendo folio:", e);
+      const fechaHoy = new Date().toISOString().split('T')[0];
+      document.getElementById("fecha_ingreso").value = fechaHoy;
+      
+      fetch(SCRIPT_URL)
+        .then(r => r.json())
+        .then(data => {
+          if(data.next_id) {
+             document.getElementById("solicitud_nro").value = data.next_id;
+          } else {
              document.getElementById("solicitud_nro").value = "10440";
-          });
-
-        console.log("Carga inicial OK");
-
-        // C) Listeners
-        const rutInput = document.getElementById("rut");
-        if (rutInput) rutInput.addEventListener("blur", buscarRazonSocial);
-        
-        document.body.addEventListener("input", (e) => {
-          if (e.target.classList.contains("phone-input") || e.target.id === "sam") {
-            e.target.value = e.target.value.replace(/\D/g, "").slice(0, 9);
           }
+        })
+        .catch(e => {
+           document.getElementById("solicitud_nro").value = "10440";
         });
 
-      } catch (err) {
-        console.error("Error crítico en inicialización:", err);
-      }
+      document.body.addEventListener("input", (e) => {
+        if (e.target.classList.contains("phone-input") || e.target.id === "sam") {
+          e.target.value = e.target.value.replace(/\D/g, "").slice(0, 9);
+        }
+      });
     });
 
-    // 7. GUARDAR
     function guardarSolicitud() {
       const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
       
@@ -642,9 +623,9 @@
     }
   </script>
 
-  <!-- CARGA API GOOGLE AL FINAL -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAVJJmzcxnJsHGwnOnPkC77rybEcuplxdc&libraries=places&callback=initMapsCallback" async defer></script>
 </body>
 </html>
+
 
 
